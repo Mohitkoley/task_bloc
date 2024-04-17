@@ -30,13 +30,21 @@ class UserListBloc extends Bloc<UserListEvent, UserListState> {
 
   void _onUpdateUserRupee(UpdateUserRupee event, Emitter<UserListState> emit) {
     if (state is UserListLoaded) {
-      final updatedUsers =
-          List<UserModel>.from((state as UserListLoaded).users);
+      final updatedState = state as UserListLoaded;
+      final updatedUsers = List<UserModel>.from(updatedState.users);
       updatedUsers[event.index] =
           updatedUsers[event.index].copyWith(rupee: event.newRupee);
-      allUserList = updatedUsers;
-      emit(UserListLoaded(users: updatedUsers, hasMoreData: true, nextPage: 1));
+      _updateAllUserList(event, updatedUsers);
+      emit(updatedState.copyWith(users: updatedUsers));
     }
+  }
+
+  _updateAllUserList(UpdateUserRupee event, List<UserModel> updatedUsers) {
+    var existingUser = allUserList.firstWhere((element) =>
+        element.phoneNumber == updatedUsers[event.index].phoneNumber);
+    int index = allUserList.indexOf(existingUser);
+    existingUser = existingUser.copyWith(rupee: event.newRupee);
+    allUserList[index] = existingUser;
   }
 
   Future<void> _onLoadMoreUsers(
@@ -72,15 +80,23 @@ class UserListBloc extends Bloc<UserListEvent, UserListState> {
 
   void _onFilterUsers(FilterUsers event, Emitter<UserListState> emit) {
     if (state is UserListLoaded) {
+      UserListLoaded originalState = state as UserListLoaded;
       if (event.query.isEmpty) {
-        emit(
-            UserListLoaded(users: allUserList, hasMoreData: true, nextPage: 1));
+        // emit(UserListLoaded(
+        //     users: allUserList, hasMoreData: false, nextPage: 1));
+
+        emit(originalState.copyWith(users: allUserList));
       } else {
         final filteredUsers = allUserList
-            .where((user) => user.name.toLowerCase().contains(event.query))
+            .where((user) =>
+                user.name.toLowerCase().contains(event.query.toLowerCase()) ||
+                user.city.toLowerCase().contains(event.query.toLowerCase()) ||
+                user.phoneNumber
+                    .toString()
+                    .toLowerCase()
+                    .contains(event.query.toLowerCase()))
             .toList();
-        emit(UserListLoaded(
-            users: filteredUsers, hasMoreData: false, nextPage: 0));
+        emit(originalState.copyWith(users: filteredUsers));
       }
     }
   }

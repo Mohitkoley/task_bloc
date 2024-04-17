@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_bloc/features/dashboard/bloc/user_bloc.dart';
 import 'package:task_bloc/features/dashboard/bloc/user_event.dart';
 import 'package:task_bloc/features/dashboard/bloc/user_state.dart';
-import 'package:task_bloc/features/dashboard/model/user_model.dart';
 import 'package:task_bloc/features/dashboard/widgets/list_item_widget.dart';
 
 class BuildUserList extends StatelessWidget {
@@ -36,7 +35,11 @@ class BuildUserList extends StatelessWidget {
                 (state.hasMoreData ? 1 : 0), // Add 1 for loader
             itemBuilder: (listContext, index) {
               if (index >= state.users.length) {
-                return const Center(child: CircularProgressIndicator());
+                if (state.hasMoreData) {
+                  return const Center(child: CircularProgressIndicator());
+                } else {
+                  return const SizedBox.shrink();
+                }
               }
 
               final user = state.users[index];
